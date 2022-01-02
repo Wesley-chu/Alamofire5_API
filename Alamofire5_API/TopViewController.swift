@@ -33,7 +33,13 @@ class TopViewController: UIViewController {
         }
     }
     
-    
+    func response2(){
+        let api_url = "http://api.e-stat.go.jp/rest/3.0/app/json/getStatsData?appId=\(app_id)&lang=J&statsDataId=0003353750&metaGetFlg=Y&cntGetFlg=N&explanationGetFlg=Y&annotationGetFlg=Y&sectionHeaderFlg=1"
+        let url = URL(string: api_url)!
+        let urlRequest = URLRequest(url: url)
+        
+        
+    }
     
     
     
