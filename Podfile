@@ -4,4 +4,5 @@ use_frameworks!
 
 target 'Alamofire5_API' do
     pod 'Alamofire', '>= 5.0','< 6.0'
+    pod "PromiseKit"
 end

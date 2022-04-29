@@ -7,42 +7,81 @@
 
 import UIKit
 import Alamofire
+import PromiseKit
 
-class TopViewController: UIViewController {
-
+class TopViewController: UIViewController,UITableViewDelegate,UITableViewDataSource {
     
-    let app_id = "775ef7b9e6cc94753db2a7b706e7bb027450a68e"
+    
+    @IBOutlet weak var dateLb: UILabel!
+    @IBOutlet weak var rateTv: UITableView!
+    
+    var rateItems = [String]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
-        response()
+        rateTv.delegate = self
+        rateTv.dataSource = self
+        
+        
+        Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { (Timer) in
+            self.getRate()
+        })
+        
     }
     
-    
-    func response(){
-        let api_url = "http://api.e-stat.go.jp/rest/3.0/app/json/getStatsData?appId=\(app_id)&lang=J&statsDataId=0003353750&metaGetFlg=Y&cntGetFlg=N&explanationGetFlg=Y&annotationGetFlg=Y&sectionHeaderFlg=1"
-        let url = URL(string: api_url)!
-        let urlRequest = URLRequest(url: url)
-        AF.request(urlRequest).responseJSON { (response) in
-            let result = response.result
-            print(result,"test")
-            debugPrint(response)
+    func getRate(){
+        firstly {
+            APIManager.shared.callForItem(request: Router.getRate, queue: .main)
+        }.done { [self] data in
+            let json = try JSONSerialization.jsonObject(with: data, options: []) as! Item
             
-            // do stuff with JSON or error
+            if let getDate = json["datetime"] as? String {
+                dateLb.text = getDate
+            }
+            
+            if let getRate = json["rate"] as? Item{
+                var arr = [String]()
+                getRate.keys.sorted(by: {$0 < $1})
+                    .map {
+                        if let value = getRate[$0]{
+                            if let value = value {
+                                arr.append("\($0)       \(value)")
+                            }
+                        }
+                    }
+                rateItems = arr
+                rateTv.reloadData()
+            }
+            
+            
+            
+        }.catch { error in
+            print(error)
         }
-    }
-    
-    func response2(){
-        let api_url = "http://api.e-stat.go.jp/rest/3.0/app/json/getStatsData?appId=\(app_id)&lang=J&statsDataId=0003353750&metaGetFlg=Y&cntGetFlg=N&explanationGetFlg=Y&annotationGetFlg=Y&sectionHeaderFlg=1"
-        let url = URL(string: api_url)!
-        let urlRequest = URLRequest(url: url)
+        
+        
+        
         
         
     }
     
     
     
+    
+    
+    
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return rateItems.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+        cell.textLabel?.text = rateItems[indexPath.row]
+        
+        return cell
+    }
     
     
     
