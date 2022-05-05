@@ -45,14 +45,39 @@ final class APIManager {
         }
     }
     
+    //Alamofireだけ
+    public func call(request: Alamofire.URLRequestConvertible,
+                     queue: DispatchQueue,resultHandler: @escaping  (CallResult<Item>) -> Void){
+        AF.request(request).validate().response { dataResponse in
+            if (dataResponse.value != nil),
+               let value = dataResponse.value, let val = value {
+                do {
+                    let json = try JSONSerialization.jsonObject(with: val, options: []) as! Item
+                    resultHandler(.success(json))
+                }catch{
+                    let statusCode = dataResponse.response?.statusCode ?? 0
+                    resultHandler(.failure(.unacceptableStatusCode(code: statusCode)))
+                }
+            }else{
+                let statusCode = dataResponse.response?.statusCode ?? 0
+                resultHandler(.failure(.unacceptableStatusCode(code: statusCode)))
+            }
+        }
+    }
+    
     public func callForItem(
         request: Alamofire.URLRequestConvertible,
-        queue: DispatchQueue) -> Promise<Data>{
+        queue: DispatchQueue) -> Promise<Item>{
         return Promise { seal in
             callForItem(request: request, queue: queue) { result in
                 switch result {
                 case let .success(item):
-                    seal.fulfill(item)
+                    do{
+                        let json = try JSONSerialization.jsonObject(with: item, options: []) as! Item
+                        seal.fulfill(json)
+                    }catch{
+                        seal.reject(error)
+                    }
                 case let .failure(error):
                     seal.reject(error)
                 }

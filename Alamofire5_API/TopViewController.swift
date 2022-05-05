@@ -27,20 +27,19 @@ class TopViewController: UIViewController,UITableViewDelegate,UITableViewDataSou
         Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { (Timer) in
             self.getRate()
         })
-        
+        //getRate2()
     }
     
     func getRate(){
         firstly {
             APIManager.shared.callForItem(request: Router.getRate, queue: .main)
         }.done { [self] data in
-            let json = try JSONSerialization.jsonObject(with: data, options: []) as! Item
-            
-            if let getDate = json["datetime"] as? String {
+
+            if let getDate = data["datetime"] as? String {
                 dateLb.text = getDate
             }
             
-            if let getRate = json["rate"] as? Item{
+            if let getRate = data["rate"] as? Item{
                 var arr = [String]()
                 getRate.keys.sorted(by: {$0 < $1})
                     .map {
@@ -53,20 +52,37 @@ class TopViewController: UIViewController,UITableViewDelegate,UITableViewDataSou
                 rateItems = arr
                 rateTv.reloadData()
             }
-            
-            
-            
         }.catch { error in
             print(error)
         }
-        
-        
-        
-        
-        
     }
     
-    
+    func getRate2(){
+        APIManager.shared.call(request: Router.getRate, queue: .main) { [self] res in
+            switch res {
+            case .success(let item):
+                if let getDate = item["datetime"] as? String {
+                    dateLb.text = getDate
+                }
+                
+                if let getRate = item["rate"] as? Item{
+                    var arr = [String]()
+                    getRate.keys.sorted(by: {$0 < $1})
+                        .map {
+                            if let value = getRate[$0]{
+                                if let value = value {
+                                    arr.append("\($0)       \(value)")
+                                }
+                            }
+                        }
+                    rateItems = arr
+                    rateTv.reloadData()
+                }
+            case .failure(let error):
+                print(error)
+            }
+        }
+    }
     
     
     
